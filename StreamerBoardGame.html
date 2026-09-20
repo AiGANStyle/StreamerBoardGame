@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
     <!-- Tone.js for synthetic cute sound effects -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    
+
     <style>
         :root {
             --pink: #ff6bc6;
@@ -18,7 +18,7 @@
             --yellow: #ffdf40;
             --purple: #b97fff;
             --peach: #ffaa77;
-        }
+        }　
 
         body, html {
             margin: 0;
@@ -61,8 +61,8 @@
             background: linear-gradient(135deg, var(--pink), var(--purple));
             border: 6px solid white;
             border-radius: 50px;
-            box-shadow: 
-                0 15px 0 #9c32a8, 
+            box-shadow:
+                0 15px 0 #9c32a8,
                 0 25px 30px rgba(0,0,0,0.3),
                 inset 0 10px 20px rgba(255,255,255,0.6);
             transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s;
@@ -73,7 +73,7 @@
 
         .dice-btn:active, .dice-btn.active-press {
             transform: translateY(10px) scale(0.95) !important;
-            box-shadow: 
+            box-shadow:
                 0 5px 0 #9c32a8,
                 0 10px 15px rgba(0,0,0,0.3),
                 inset 0 5px 10px rgba(255,255,255,0.6);
@@ -111,12 +111,12 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
-        
+
         .rolling-dice {
             animation: shake 0.2s linear infinite, colorPulse 0.5s infinite alternate;
             display: inline-block;
         }
-        
+
         @keyframes shake {
             0% { transform: translate(1px, 1px) rotate(0deg) scale(1); }
             10% { transform: translate(-1px, -2px) rotate(-5deg) scale(1.1); }
@@ -130,7 +130,7 @@
             90% { transform: translate(1px, 2px) rotate(0deg) scale(1.1); }
             100% { transform: translate(1px, -2px) rotate(-5deg) scale(1); }
         }
-        
+
         @keyframes colorPulse {
             from { color: #ffffff; text-shadow: 0 0 10px #ff6bc6; }
             to { color: #ffff00; text-shadow: 0 0 30px #ffdf40, 0 0 10px #ff6bc6; }
@@ -150,7 +150,7 @@
             z-index: 40;
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        
+
         #big-dice-result.show {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
@@ -169,7 +169,7 @@
         <div class="glass-panel p-6 max-w-md w-full relative">
             <button id="close-settings" class="absolute top-2 right-4 text-3xl font-bold text-pink-500 hover:text-pink-700 cursor-pointer">&times;</button>
             <h2 class="text-2xl font-black text-pink-500 mb-4 text-center">Settings</h2>
-            
+
             <div class="mb-4">
                 <label class="block text-gray-800 font-black mb-2 text-lg">Custom Emojis</label>
                 <input type="text" id="custom-emoji-input" value="👻🦄💖🍭🍰⭐👾🌈👽" class="block w-full text-lg p-2 rounded-xl outline-none text-center border-2 border-pink-300">
@@ -184,7 +184,7 @@
                     file:bg-pink-100 file:text-pink-600
                     hover:file:bg-pink-200 cursor-pointer bg-white/80 rounded-full outline-none border-2 border-pink-300">
             </div>
-            
+
             <p id="talk-status" class="text-sm text-gray-600 font-bold mb-4 drop-shadow-sm">No file loaded. Using default messages.</p>
 
             <div class="mb-4 flex justify-center mt-6">
@@ -195,7 +195,7 @@
 
     <!-- Main UI overlay -->
     <div class="absolute inset-0 z-10 pointer-events-none overflow-hidden">
-        
+
         <!-- LAP UI (Left Side) -->
         <div class="absolute top-20 left-4 flex flex-col items-start gap-4 pointer-events-auto">
             <div class="pastel-panel px-4 py-2 flex items-center gap-2 float-anim shadow-sm">
@@ -216,7 +216,7 @@
                 </div>
                 <span class="text-2xl">💖</span>
             </div>
-            
+
             <div class="pastel-panel px-4 py-2 flex items-center gap-2 float-anim shadow-sm" style="animation-delay: 0.4s;">
                 <div class="flex flex-col items-end leading-none">
                     <span class="text-xs text-yellow-600 font-bold uppercase tracking-widest">Gold</span>
@@ -278,7 +278,7 @@
 
             synths.fanfare = new Tone.PolySynth(Tone.FMSynth).toDestination();
             synths.fanfare.volume.value = -10;
-            
+
             synths.fumble = new Tone.MembraneSynth({
                 pitchDecay: 0.2, octaves: 2, oscillator: { type: "sine" },
                 envelope: { attack: 0.01, decay: 0.4, sustain: 0.01, release: 0.2 }
@@ -323,7 +323,7 @@
 
         // --- Canvas Setup ---
         const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d'); 
+        const ctx = canvas.getContext('2d');
         let width, height;
         let centerX, centerY;
 
@@ -334,10 +334,10 @@
             canvas.width = width * dpr;
             canvas.height = height * dpr;
             ctx.scale(dpr, dpr);
-            
+
             // 左端と上端を固定しつつ、右と下に広げるため中心を右下へシフト
             centerX = width * 0.40;
-            centerY = height * 0.49; 
+            centerY = height * 0.49;
             generateBoard();
         }
         window.addEventListener('resize', resize);
@@ -366,15 +366,15 @@
         function generateBoard() {
             tiles = [];
             // ボード全体のサイズ（半径）を拡大して右と下に寄せる
-            const radiusX = Math.min(width * 0.35, 431); 
-            const radiusY = Math.min(height * 0.40, 284); 
-            
+            const radiusX = Math.min(width * 0.35, 431);
+            const radiusY = Math.min(height * 0.40, 284);
+
             for (let i = 0; i < numTiles; i++) {
                 const angle = (i / numTiles) * Math.PI * 2;
                 const wobble = Math.sin(angle * 4) * 15;
                 const x = centerX + Math.cos(angle) * radiusX;
                 const y = centerY + Math.sin(angle) * radiusY + wobble;
-                
+
                 tiles.push({
                     x, y,
                     color: tileColors[i % tileColors.length],
@@ -400,7 +400,7 @@
             ctx.lineWidth = tiles[0].size * 1.5;
             ctx.lineJoin = 'round';
             ctx.stroke();
-            
+
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
             ctx.lineWidth = tiles[0].size;
             ctx.stroke();
@@ -418,7 +418,7 @@
         function drawCandyTile(tile) {
             ctx.save();
             ctx.translate(tile.x, tile.y);
-            
+
             const timeOffset = Date.now() * 0.002 + tile.index;
             const floatY = Math.sin(timeOffset) * 5;
             ctx.translate(0, floatY);
@@ -430,7 +430,7 @@
 
             ctx.beginPath();
             ctx.roundRect(-tile.size, -tile.size, tile.size*2, tile.size*2, tile.size * 0.4);
-            
+
             const grad = ctx.createLinearGradient(-tile.size, -tile.size, tile.size, tile.size);
             grad.addColorStop(0, '#ffffff');
             grad.addColorStop(0.3, tile.color);
@@ -470,21 +470,21 @@
         const initialEmojiList = parseEmojis('👻🦄💖🍭🍰⭐👾🌈👽');
 
         const character = {
-            drawIndex: 0, 
-            heightOffset: 0, 
+            drawIndex: 0,
+            heightOffset: 0,
             size: width < 600 ? 30 : 45, // キャラクターのサイズは変更しない
-            
+
             emojis: initialEmojiList,
             currentEmojiIndex: Math.floor(Math.random() * initialEmojiList.length), // Random initial
             tapScale: 1,
             screenX: 0,
             screenY: 0,
-            
+
             draw() {
                 const fromTile = tiles[Math.floor(this.drawIndex) % numTiles];
                 const toTile = tiles[Math.ceil(this.drawIndex) % numTiles];
                 const progress = this.drawIndex - Math.floor(this.drawIndex);
-                
+
                 let x = fromTile.x + (toTile.x - fromTile.x) * progress;
                 let y = fromTile.y + (toTile.y - fromTile.y) * progress;
 
@@ -503,11 +503,11 @@
                 this.screenY = y - this.heightOffset - this.size + idleY;
 
                 ctx.save();
-                ctx.translate(this.screenX, this.screenY); 
-                
+                ctx.translate(this.screenX, this.screenY);
+
                 ctx.beginPath();
                 ctx.ellipse(0, this.size, this.size*0.7, this.size*0.3, 0, 0, Math.PI*2);
-                ctx.fillStyle = `rgba(0,0,0,${0.2 - (this.heightOffset/200)})`; 
+                ctx.fillStyle = `rgba(0,0,0,${0.2 - (this.heightOffset/200)})`;
                 ctx.fill();
 
                 ctx.rotate(idleRot);
@@ -522,7 +522,7 @@
                 ctx.font = `${this.size * 1.5}px sans-serif`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                
+
                 const emoji = this.emojis[this.currentEmojiIndex] || '⭐';
                 ctx.fillText(emoji, 0, 0);
 
@@ -537,7 +537,7 @@
                 for (let i = startPos + 1; i <= gameState.targetPos; i++) {
                     await this.hopToNextTile(i);
                     spawnParticles(tiles[i % numTiles].x, tiles[i % numTiles].y, 'landing', 3);
-                    
+
                     const tileColor = tiles[i % numTiles].color;
                     if (tileColor === colors.pink || tileColor === colors.peach) {
                         addLikes(Math.floor(Math.random() * 20) + 10);
@@ -554,7 +554,7 @@
                         document.getElementById('lap-count').innerText = gameState.laps;
                         spawnParticles(centerX, centerY, 'lap_complete', 15);
                         playSound('celebration');
-                        
+
                         if (typeof spawnFakeChat === 'function') {
                             const currentLapPhrases = phraseBank.lap || ["一周おめ！🎉", "88888888"];
                             for (let j = 0; j < 6; j++) {
@@ -565,7 +565,7 @@
                         }
                     }
                 }
-                
+
                 gameState.boardPos = gameState.targetPos % numTiles;
                 this.drawIndex = gameState.boardPos;
                 gameState.isMoving = false;
@@ -582,9 +582,9 @@
                         const elapsed = currentTime - startTime;
                         const progress = Math.min(elapsed / duration, 1);
                         const moveProgress = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
-                        
+
                         this.drawIndex = startDrawIndex + moveProgress;
-                        this.heightOffset = Math.sin(progress * Math.PI) * 60; 
+                        this.heightOffset = Math.sin(progress * Math.PI) * 60;
 
                         if (Math.random() > 0.5) {
                             const tile = tiles[Math.floor(this.drawIndex) % numTiles];
@@ -617,7 +617,7 @@
                 this.angle = Math.random() * Math.PI * 2;
                 this.rotation = Math.random() * Math.PI * 2;
                 this.rotSpeed = (Math.random() - 0.5) * 0.2;
-                
+
                 const speed = Math.random() * 10 + 2;
                 this.vx = Math.cos(this.angle) * speed;
                 this.vy = Math.sin(this.angle) * speed;
@@ -626,7 +626,7 @@
                 if (type === 'buwawa') {
                     this.emoji = genericEmojis[Math.floor(Math.random() * genericEmojis.length)];
                     this.size = Math.random() * 30 + 20;
-                    this.vy -= 10; 
+                    this.vy -= 10;
                     this.gravity = 0.5;
                 } else if (type === 'fumble') {
                     this.emoji = ['💦', '💧', '👻', '💀'][Math.floor(Math.random() * 4)];
@@ -679,7 +679,7 @@
                 this.vy += this.gravity;
                 this.rotation += this.rotSpeed;
                 this.life -= this.decay;
-                
+
                 if (this.type === 'confetti' || this.type === 'buwawa') {
                     this.vx *= 0.98;
                 }
@@ -690,9 +690,9 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.rotation);
                 ctx.globalAlpha = Math.max(0, this.life);
-                
+
                 // 重い影処理は無効化
-                ctx.shadowBlur = 0; 
+                ctx.shadowBlur = 0;
                 ctx.shadowColor = 'transparent';
 
                 if (this.emoji) {
@@ -759,17 +759,17 @@
             celebrationText.style.filter = `drop-shadow(0 0 20px ${color})`;
             celebrationText.style.opacity = 1;
             celebrationText.style.transform = 'translate(-50%, -50%) scale(1.2)';
-            
+
             setTimeout(() => {
                 celebrationText.style.opacity = 0;
                 celebrationText.style.transform = 'translate(-50%, -50%) scale(1)';
             }, 3000);
         }
-        
+
         function showBigDice(value) {
             const diceUnicode = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
             bigDiceResult.innerText = diceUnicode[value - 1];
-            
+
             // 色分け
             if (value === 1) bigDiceResult.style.color = '#b97fff'; // purple
             else if (value === 6) bigDiceResult.style.color = '#45f3ff'; // cyan
@@ -807,35 +807,35 @@
 
         diceBtn.addEventListener('click', async (e) => {
             if (gameState.isMoving) return;
-            initAudio(); 
-            
+            initAudio();
+
             if (typeof updateChatState === 'function') updateChatState('rolling');
-            
+
             diceBtn.classList.add('active-press');
             setTimeout(() => diceBtn.classList.remove('active-press'), 150);
 
             const rect = diceBtn.getBoundingClientRect();
             spawnParticles(rect.left + rect.width/2, rect.top, 'buwawa', 5);
-            
+
             diceValueEl.classList.add('rolling-dice');
             diceBtn.style.transform = 'scale(1.1)';
 
             const diceUnicode = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-            
+
             let roll = 1;
             let rolls = 0;
             let lastSoundTime = 0;
-            
+
             const rollInterval = setInterval(() => {
                 diceValueEl.innerText = diceUnicode[Math.floor(Math.random()*6)];
                 rolls++;
-                
+
                 const now = performance.now();
                 if (now - lastSoundTime > 80) {
                      playSound('roll');
                      lastSoundTime = now;
                 }
-                
+
                 if (rolls % 4 === 0 && typeof spawnFakeChat === 'function') {
                     spawnFakeChat();
                 }
@@ -844,12 +844,12 @@
                     clearInterval(rollInterval);
                     diceValueEl.classList.remove('rolling-dice');
                     diceBtn.style.transform = '';
-                    
+
                     roll = Math.floor(Math.random() * 6) + 1;
                     diceValueEl.innerText = diceUnicode[roll - 1];
-                    
+
                     showBigDice(roll);
-                    
+
                     if (roll === 1) {
                         if (typeof updateChatState === 'function') updateChatState('fumble', roll);
                         playSound('fumble');
@@ -869,14 +869,14 @@
                         if (typeof updateChatState === 'function') updateChatState('idle');
                     }, 600);
                 }
-            }, 60); 
+            }, 60);
         });
 
         canvas.addEventListener('pointerdown', (e) => {
             const rect = canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
-            
+
             const dx = mouseX - character.screenX;
             const dy = mouseY - character.screenY;
             if (Math.sqrt(dx*dx + dy*dy) < character.size * 1.5) {
@@ -929,11 +929,11 @@
             gameState.boardPos = 0;
             character.drawIndex = 0;
             character.currentEmojiIndex = Math.floor(Math.random() * character.emojis.length);
-            
+
             document.getElementById('lap-count').innerText = gameState.laps;
             document.getElementById('likes-count').innerText = gameState.likes;
             document.getElementById('gold-count').innerText = gameState.gold;
-            
+
             settingsModal.classList.add('hidden');
             playSound('jump');
             spawnParticles(centerX, centerY, 'confetti', 30);
@@ -972,7 +972,7 @@
                     newBank[currentCategory].push(line);
                 }
             }
-            
+
             let loaded = false;
             for (let key of validCategories) {
                 if (newBank[key].length > 0) {
@@ -982,10 +982,10 @@
             }
             return loaded;
         }
-        
+
         let chatState = 'idle';
         let currentRollValue = 0;
-        
+
         function updateChatState(state, roll = 0) {
             chatState = state;
             if (roll > 0) currentRollValue = roll;
@@ -999,11 +999,11 @@
         function spawnFakeChat(forceText = null) {
             const msg = document.createElement('div');
             const colorClass = chatColors[Math.floor(Math.random() * chatColors.length)];
-            
+
             msg.className = `absolute right-0 pastel-panel px-4 py-2 text-sm md:text-base font-black ${colorClass} max-w-full break-words shadow-sm`;
             msg.style.borderRadius = "20px 20px 0 20px";
             msg.style.opacity = '0';
-            
+
             let text = forceText;
             if (!text) {
                 if (chatState === 'idle') {
@@ -1019,22 +1019,22 @@
                     text = normalTexts[Math.floor(Math.random() * normalTexts.length)];
                 }
             }
-            
+
             msg.innerText = text;
             chatContainer.appendChild(msg);
-            
+
             const height = msg.offsetHeight;
             const margin = 12;
-            let targetY = -10; 
-            
+            let targetY = -10;
+
             if (activeBubbles.length > 0) {
                 const lowest = activeBubbles[activeBubbles.length - 1];
                 const requiredY = lowest.y - height - margin;
                 targetY = Math.min(-10, requiredY);
             }
-            
+
             const driftX = Math.random() * 20 - 10;
-            
+
             const bubbleObj = {
                 element: msg,
                 y: targetY,
@@ -1043,23 +1043,23 @@
                 xOffset: driftX,
                 phase: Math.random() * Math.PI * 2
             };
-            
+
             msg.style.transform = `translateX(${bubbleObj.xOffset}px)`;
             msg.style.bottom = `${bubbleObj.y}px`;
             msg.style.opacity = '1';
-            
+
             activeBubbles.push(bubbleObj);
         }
 
         function chatLoop() {
             let probability = chatState === 'idle' ? 0.4 : 0.85;
-            
+
             if (Math.random() < probability) {
                 spawnFakeChat();
                 if (Math.random() < 0.3) setTimeout(() => spawnFakeChat(), 200);
                 if (Math.random() < 0.1) setTimeout(() => spawnFakeChat(), 400);
             }
-            
+
             const delay = chatState === 'idle' ? 1200 : 300;
             setTimeout(chatLoop, delay + Math.random() * 500);
         }
@@ -1067,19 +1067,19 @@
 
         function updateChats() {
             const containerHeight = chatContainer.offsetHeight || 500;
-            
+
             for (let i = activeBubbles.length - 1; i >= 0; i--) {
                 const b = activeBubbles[i];
                 b.y += b.driftSpeed;
                 b.element.style.bottom = b.y + 'px';
-                
+
                 const currentX = b.xOffset + Math.sin((Date.now() / 1000) * 1.5 + b.phase) * 8;
                 b.element.style.transform = `translateX(${currentX}px)`;
-                
+
                 if (b.y > containerHeight - 60) {
                     b.element.style.opacity = Math.max(0, 1 - (b.y - (containerHeight - 60)) / 50);
                 }
-                
+
                 if (b.y > containerHeight) {
                     if (b.element.parentElement) {
                         b.element.parentElement.removeChild(b.element);
