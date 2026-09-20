@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Harajuku Monster Café Board Game</title>
+    <!-- Tailwind CSS for UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for the cute bubbly text -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <!-- Tone.js for synthetic cute sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    
+    <style>
+        :root {
+            --pink: #ff6bc6;
+            --cyan: #45f3ff;
+            --yellow: #ffdf40;
+            --purple: #b97fff;
+            --peach: #ffaa77;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Nunito', sans-serif;
+            background-color: #00FF00; /* Chroma key green */
+            touch-action: none; /* Prevent scroll on mobile */
+        }
+
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* Glassmorphism UI Panels (Updated to be opaque for Chroma Key) */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 4px solid rgba(255, 255, 255, 0.9);
+            border-radius: 30px;
+            box-shadow: 0 10px 30px rgba(255, 107, 198, 0.3);
+        }
+
+        /* Stats Text Styling with Neon Glow */
+        .stat-text {
+            text-shadow: 0 0 10px rgba(255,255,255,0.8), 0 0 20px currentColor;
+            font-weight: 900;
+        }
+
+        /* Big Toy-like Dice Button */
+        .dice-btn {
+            background: linear-gradient(135deg, var(--pink), var(--purple));
+            border: 6px solid white;
+            border-radius: 50px;
+            box-shadow: 
+                0 15px 0 #9c32a8, 
+                0 25px 30px rgba(0,0,0,0.3),
+                inset 0 10px 20px rgba(255,255,255,0.6);
+            transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dice-btn:active, .dice-btn.active-press {
+            transform: translateY(10px) scale(0.95) !important;
+            box-shadow: 
+                0 5px 0 #9c32a8,
+                0 10px 15px rgba(0,0,0,0.3),
+                inset 0 5px 10px rgba(255,255,255,0.6);
+        }
+
+        .dice-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
+        }
+
+        .float-anim {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Chroma-key safe solid pastel panel */
+        .pastel-panel {
+            background: linear-gradient(135deg, #ffffff, #fff0f8);
+            border: 3px solid #ffb3d9;
+            border-radius: 25px;
+            box-shadow: 0 5px 15px rgba(255, 107, 198, 0.3), inset 0 0 8px rgba(255, 255, 255, 1);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .rolling-dice {
+            animation: shake 0.2s linear infinite, colorPulse 0.5s infinite alternate;
+            display: inline-block;
+        }
+        
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg) scale(1); }
+            10% { transform: translate(-1px, -2px) rotate(-5deg) scale(1.1); }
+            20% { transform: translate(-3px, 0px) rotate(5deg) scale(1); }
+            30% { transform: translate(3px, 2px) rotate(0deg) scale(1.2); }
+            40% { transform: translate(1px, -1px) rotate(5deg) scale(1); }
+            50% { transform: translate(-1px, 2px) rotate(-5deg) scale(1.1); }
+            60% { transform: translate(-3px, 1px) rotate(0deg) scale(1); }
+            70% { transform: translate(3px, 1px) rotate(-5deg) scale(1.2); }
+            80% { transform: translate(-1px, -1px) rotate(5deg) scale(1); }
+            90% { transform: translate(1px, 2px) rotate(0deg) scale(1.1); }
+            100% { transform: translate(1px, -2px) rotate(-5deg) scale(1); }
+        }
+        
+        @keyframes colorPulse {
+            from { color: #ffffff; text-shadow: 0 0 10px #ff6bc6; }
+            to { color: #ffff00; text-shadow: 0 0 30px #ffdf40, 0 0 10px #ff6bc6; }
+        }
+
+        /* Large Dice Result display - Updated to match new center (40%, 49%) */
+        #big-dice-result {
+            position: absolute;
+            top: 49%;
+            left: 40%;
+            transform: translate(-50%, -50%) scale(0.5);
+            font-size: 15rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 0 30px #ff6bc6, 0 0 50px #ffdf40;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 40;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        #big-dice-result.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="game-canvas"></canvas>
+
+    <!-- Top Left Settings Button -->
+    <button id="settings-btn" class="absolute top-4 left-4 z-50 text-4xl pastel-panel w-12 h-12 flex items-center justify-center hover:scale-110 transition-transform drop-shadow-md cursor-pointer outline-none">⚙️</button>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="glass-panel p-6 max-w-md w-full relative">
+            <button id="close-settings" class="absolute top-2 right-4 text-3xl font-bold text-pink-500 hover:text-pink-700 cursor-pointer">&times;</button>
+            <h2 class="text-2xl font-black text-pink-500 mb-4 text-center">Settings</h2>
+            
+            <div class="mb-4">
+                <label class="block text-gray-800 font-black mb-2 text-lg">Custom Emojis</label>
+                <input type="text" id="custom-emoji-input" value="👻🦄💖🍭🍰⭐👾🌈👽" class="block w-full text-lg p-2 rounded-xl outline-none text-center border-2 border-pink-300">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-gray-800 font-black mb-2 text-lg">Load talk.txt</label>
+                <input type="file" id="talk-file-input" accept=".txt" class="block w-full text-sm text-gray-700
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-black
+                    file:bg-pink-100 file:text-pink-600
+                    hover:file:bg-pink-200 cursor-pointer bg-white/80 rounded-full outline-none border-2 border-pink-300">
+            </div>
+            
+            <p id="talk-status" class="text-sm text-gray-600 font-bold mb-4 drop-shadow-sm">No file loaded. Using default messages.</p>
+
+            <div class="mb-4 flex justify-center mt-6">
+                <button id="reset-game-btn" class="bg-red-400 text-white font-black py-2 px-6 rounded-full hover:bg-red-500 transition-colors shadow-lg border-2 border-white">RESET GAME 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main UI overlay -->
+    <div class="absolute inset-0 z-10 pointer-events-none overflow-hidden">
+        
+        <!-- LAP UI (Left Side) -->
+        <div class="absolute top-20 left-4 flex flex-col items-start gap-4 pointer-events-auto">
+            <div class="pastel-panel px-4 py-2 flex items-center gap-2 float-anim shadow-sm">
+                <span class="text-2xl">🏁</span>
+                <div class="flex flex-col items-start leading-none">
+                    <span class="text-xs text-cyan-600 font-bold uppercase tracking-widest">Lap</span>
+                    <span id="lap-count" class="text-xl stat-text text-[var(--cyan)]">1</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- LIKES & GOLD UI (Right Side) -->
+        <div class="absolute top-4 right-4 flex flex-col items-end gap-3 pointer-events-auto z-20">
+            <div class="pastel-panel px-4 py-2 flex items-center gap-2 float-anim shadow-sm" style="animation-delay: 0.2s;">
+                <div class="flex flex-col items-end leading-none">
+                    <span class="text-xs text-pink-600 font-bold uppercase tracking-widest">Likes</span>
+                    <span id="likes-count" class="text-xl stat-text text-[var(--pink)]">0</span>
+                </div>
+                <span class="text-2xl">💖</span>
+            </div>
+            
+            <div class="pastel-panel px-4 py-2 flex items-center gap-2 float-anim shadow-sm" style="animation-delay: 0.4s;">
+                <div class="flex flex-col items-end leading-none">
+                    <span class="text-xs text-yellow-600 font-bold uppercase tracking-widest">Gold</span>
+                    <span id="gold-count" class="text-xl stat-text text-[var(--yellow)]">0</span>
+                </div>
+                <span class="text-2xl">💰</span>
+            </div>
+        </div>
+
+        <!-- Big Dice Result Pop-up -->
+        <div id="big-dice-result">⚅</div>
+
+        <!-- Milestone Notification Area - Updated to match new center (40%, 49%) -->
+        <div id="celebration-text" class="absolute top-[49%] left-[40%] transform -translate-x-1/2 -translate-y-1/2 text-5xl md:text-7xl text-white font-black text-center opacity-0 transition-all duration-300 pointer-events-none" style="-webkit-text-stroke: 3px #ff6bc6; filter: drop-shadow(0 0 20px #ff6bc6); z-index: 50;">
+            SUPER KAWAI!!
+        </div>
+
+        <!-- Fake Chat Container (Aligned strictly to the right) -->
+        <div id="chat-container" class="absolute right-4 top-32 bottom-24 w-56 md:w-64 overflow-hidden pointer-events-none z-10">
+            <!-- Chat messages will be injected here -->
+        </div>
+
+        <!-- Bottom Controls (ROLL Button) - Centered but taking into account the left space -->
+        <div class="absolute bottom-6 w-full pointer-events-auto flex justify-center" style="padding-left: 15%;">
+            <button id="dice-btn" class="dice-btn px-8 py-3 text-white font-black text-3xl md:text-4xl flex items-center gap-3 cursor-pointer outline-none select-none z-50">
+                <span id="dice-value">🎲</span>
+                <span>ROLL!</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // --- Sound Engine (Tone.js) ---
+        let audioCtxStarted = false;
+        const synths = {};
+
+        async function initAudio() {
+            if (audioCtxStarted) return;
+            await Tone.start();
+            audioCtxStarted = true;
+
+            synths.jump = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "sine" },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.1 }
+            }).toDestination();
+            synths.jump.volume.value = -10;
+
+            synths.sparkle = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            synths.sparkle.volume.value = -15;
+
+            synths.coin = new Tone.MetalSynth({
+                frequency: 1200, envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+                harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5
+            }).toDestination();
+            synths.coin.volume.value = -15;
+
+            synths.fanfare = new Tone.PolySynth(Tone.FMSynth).toDestination();
+            synths.fanfare.volume.value = -10;
+            
+            synths.fumble = new Tone.MembraneSynth({
+                pitchDecay: 0.2, octaves: 2, oscillator: { type: "sine" },
+                envelope: { attack: 0.01, decay: 0.4, sustain: 0.01, release: 0.2 }
+            }).toDestination();
+            synths.fumble.volume.value = -5;
+        }
+
+        function playSound(type) {
+            if (!audioCtxStarted) return;
+            try {
+                switch (type) {
+                    case 'jump':
+                        synths.jump.triggerAttackRelease(["C5", "F5"], "16n");
+                        break;
+                    case 'tap':
+                        synths.jump.triggerAttackRelease(["C6", "G6"], "32n");
+                        break;
+                    case 'like':
+                        synths.sparkle.triggerAttackRelease(["C6", "E6", "G6"], "16n");
+                        synths.sparkle.triggerAttackRelease(["E6", "G6", "C7"], "16n", "+0.1");
+                        break;
+                    case 'gold':
+                        synths.coin.triggerAttackRelease("32n");
+                        break;
+                    case 'celebration':
+                    case 'critical':
+                        synths.fanfare.triggerAttackRelease(["C4", "E4", "G4", "C5"], "8n");
+                        synths.fanfare.triggerAttackRelease(["E4", "G4", "C5", "E5"], "8n", "+0.2");
+                        synths.fanfare.triggerAttackRelease(["G4", "C5", "E5", "G5"], "2n", "+0.4");
+                        break;
+                    case 'fumble':
+                        synths.fumble.triggerAttackRelease("C2", "4n");
+                        break;
+                    case 'roll':
+                        synths.jump.triggerAttackRelease(["G4"], "16n");
+                        break;
+                }
+            } catch (e) {
+                console.warn("Audio scheduling skipped:", e);
+            }
+        }
+
+        // --- Canvas Setup ---
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d'); 
+        let width, height;
+        let centerX, centerY;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            ctx.scale(dpr, dpr);
+            
+            // 左端と上端を固定しつつ、右と下に広げるため中心を右下へシフト
+            centerX = width * 0.40;
+            centerY = height * 0.49; 
+            generateBoard();
+        }
+        window.addEventListener('resize', resize);
+
+        // --- Game State ---
+        const gameState = {
+            laps: 1,
+            likes: 0,
+            gold: 0,
+            boardPos: 0,
+            targetPos: 0,
+            isMoving: false,
+            milestoneLikes: 500,
+            milestoneGold: 1000
+        };
+
+        const colors = {
+            pink: '#ff6bc6', cyan: '#45f3ff', yellow: '#ffdf40',
+            purple: '#b97fff', peach: '#ffaa77', white: '#ffffff'
+        };
+        const tileColors = [colors.pink, colors.cyan, colors.yellow, colors.purple, colors.peach];
+
+        const numTiles = 24;
+        let tiles = [];
+
+        function generateBoard() {
+            tiles = [];
+            // ボード全体のサイズ（半径）を拡大して右と下に寄せる
+            const radiusX = Math.min(width * 0.35, 431); 
+            const radiusY = Math.min(height * 0.40, 284); 
+            
+            for (let i = 0; i < numTiles; i++) {
+                const angle = (i / numTiles) * Math.PI * 2;
+                const wobble = Math.sin(angle * 4) * 15;
+                const x = centerX + Math.cos(angle) * radiusX;
+                const y = centerY + Math.sin(angle) * radiusY + wobble;
+                
+                tiles.push({
+                    x, y,
+                    color: tileColors[i % tileColors.length],
+                    size: width < 600 ? 26 : 38, // タイルサイズを縮小 (元: 30 / 45)
+                    angle: angle,
+                    index: i
+                });
+            }
+        }
+
+        function drawBoard() {
+            // 背景をクロマキー用の緑で塗りつぶし
+            ctx.fillStyle = '#00FF00';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            tiles.forEach((t, i) => {
+                if (i === 0) ctx.moveTo(t.x, t.y);
+                else ctx.lineTo(t.x, t.y);
+            });
+            ctx.closePath();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = tiles[0].size * 1.5;
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+            
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = tiles[0].size;
+            ctx.stroke();
+
+            const sortedTiles = [...tiles].sort((a, b) => a.y - b.y);
+
+            sortedTiles.forEach(tile => {
+                drawCandyTile(tile);
+                if (Math.round(character.drawIndex) === tile.index) {
+                    character.draw();
+                }
+            });
+        }
+
+        function drawCandyTile(tile) {
+            ctx.save();
+            ctx.translate(tile.x, tile.y);
+            
+            const timeOffset = Date.now() * 0.002 + tile.index;
+            const floatY = Math.sin(timeOffset) * 5;
+            ctx.translate(0, floatY);
+
+            ctx.beginPath();
+            ctx.arc(0, 15, tile.size, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.roundRect(-tile.size, -tile.size, tile.size*2, tile.size*2, tile.size * 0.4);
+            
+            const grad = ctx.createLinearGradient(-tile.size, -tile.size, tile.size, tile.size);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.3, tile.color);
+            grad.addColorStop(1, adjustColor(tile.color, -40));
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.ellipse(-tile.size*0.3, -tile.size*0.4, tile.size*0.4, tile.size*0.2, Math.PI/4, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.fill();
+
+            if (tile.index === 0) {
+                ctx.fillStyle = 'white';
+                ctx.font = `bold ${tile.size*0.6}px Nunito`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('START', 0, 0);
+            }
+
+            ctx.restore();
+        }
+
+        function adjustColor(color, amount) {
+            return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+        }
+
+        // 絵文字を安全に配列化（サロゲートペア対応）
+        function parseEmojis(str) {
+            try {
+                return [...new Intl.Segmenter().segment(str)].map(x => x.segment);
+            } catch (e) {
+                return Array.from(str);
+            }
+        }
+
+        const initialEmojiList = parseEmojis('👻🦄💖🍭🍰⭐👾🌈👽');
+
+        const character = {
+            drawIndex: 0, 
+            heightOffset: 0, 
+            size: width < 600 ? 30 : 45, // キャラクターのサイズは変更しない
+            
+            emojis: initialEmojiList,
+            currentEmojiIndex: Math.floor(Math.random() * initialEmojiList.length), // Random initial
+            tapScale: 1,
+            screenX: 0,
+            screenY: 0,
+            
+            draw() {
+                const fromTile = tiles[Math.floor(this.drawIndex) % numTiles];
+                const toTile = tiles[Math.ceil(this.drawIndex) % numTiles];
+                const progress = this.drawIndex - Math.floor(this.drawIndex);
+                
+                let x = fromTile.x + (toTile.x - fromTile.x) * progress;
+                let y = fromTile.y + (toTile.y - fromTile.y) * progress;
+
+                let idleY = 0;
+                let idleRot = 0;
+                if (!gameState.isMoving) {
+                    const t = Date.now() * 0.005;
+                    idleY = Math.sin(t) * 6;
+                    idleRot = Math.sin(t * 0.5) * 0.15;
+                }
+
+                if (this.tapScale > 1) this.tapScale -= 0.05;
+                if (this.tapScale < 1) this.tapScale = 1;
+
+                this.screenX = x;
+                this.screenY = y - this.heightOffset - this.size + idleY;
+
+                ctx.save();
+                ctx.translate(this.screenX, this.screenY); 
+                
+                ctx.beginPath();
+                ctx.ellipse(0, this.size, this.size*0.7, this.size*0.3, 0, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(0,0,0,${0.2 - (this.heightOffset/200)})`; 
+                ctx.fill();
+
+                ctx.rotate(idleRot);
+                ctx.scale(this.tapScale, this.tapScale);
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.size * 0.9, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+                ctx.fill();
+
+                ctx.globalAlpha = 1;
+                ctx.font = `${this.size * 1.5}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                const emoji = this.emojis[this.currentEmojiIndex] || '⭐';
+                ctx.fillText(emoji, 0, 0);
+
+                ctx.restore();
+            },
+
+            async move(steps) {
+                gameState.isMoving = true;
+                const startPos = gameState.boardPos;
+                gameState.targetPos = startPos + steps;
+
+                for (let i = startPos + 1; i <= gameState.targetPos; i++) {
+                    await this.hopToNextTile(i);
+                    spawnParticles(tiles[i % numTiles].x, tiles[i % numTiles].y, 'landing', 3);
+                    
+                    const tileColor = tiles[i % numTiles].color;
+                    if (tileColor === colors.pink || tileColor === colors.peach) {
+                        addLikes(Math.floor(Math.random() * 20) + 10);
+                        spawnParticles(tiles[i % numTiles].x, tiles[i % numTiles].y - 50, 'like', 3);
+                        playSound('like');
+                    } else {
+                        addGold(Math.floor(Math.random() * 50) + 50);
+                        spawnParticles(tiles[i % numTiles].x, tiles[i % numTiles].y - 50, 'gold', 3);
+                        playSound('gold');
+                    }
+
+                    if (i % numTiles === 0 && i !== 0) {
+                        gameState.laps++;
+                        document.getElementById('lap-count').innerText = gameState.laps;
+                        spawnParticles(centerX, centerY, 'lap_complete', 15);
+                        playSound('celebration');
+                        
+                        if (typeof spawnFakeChat === 'function') {
+                            const currentLapPhrases = phraseBank.lap || ["一周おめ！🎉", "88888888"];
+                            for (let j = 0; j < 6; j++) {
+                                setTimeout(() => {
+                                    spawnFakeChat(currentLapPhrases[Math.floor(Math.random() * currentLapPhrases.length)]);
+                                }, j * 300);
+                            }
+                        }
+                    }
+                }
+                
+                gameState.boardPos = gameState.targetPos % numTiles;
+                this.drawIndex = gameState.boardPos;
+                gameState.isMoving = false;
+            },
+
+            hopToNextTile(targetIndex) {
+                return new Promise(resolve => {
+                    const duration = 300;
+                    const startTime = performance.now();
+                    const startDrawIndex = this.drawIndex;
+                    playSound('jump');
+
+                    const animateHop = (currentTime) => {
+                        const elapsed = currentTime - startTime;
+                        const progress = Math.min(elapsed / duration, 1);
+                        const moveProgress = progress < 0.5 ? 2 * progress * progress : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                        
+                        this.drawIndex = startDrawIndex + moveProgress;
+                        this.heightOffset = Math.sin(progress * Math.PI) * 60; 
+
+                        if (Math.random() > 0.5) {
+                            const tile = tiles[Math.floor(this.drawIndex) % numTiles];
+                            spawnParticles(tile.x, tile.y - this.heightOffset, 'trail');
+                        }
+
+                        if (progress < 1) {
+                            requestAnimationFrame(animateHop);
+                        } else {
+                            this.heightOffset = 0;
+                            resolve();
+                        }
+                    };
+                    requestAnimationFrame(animateHop);
+                });
+            }
+        };
+
+        const particles = [];
+        const genericEmojis = ['✨', '💖', '🍭', '👻', '🌟', '🍬', '🎀', '🍰'];
+
+        class Particle {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.life = 1;
+                this.decay = Math.random() * 0.02 + 0.01;
+                this.size = Math.random() * 20 + 10;
+                this.angle = Math.random() * Math.PI * 2;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotSpeed = (Math.random() - 0.5) * 0.2;
+                
+                const speed = Math.random() * 10 + 2;
+                this.vx = Math.cos(this.angle) * speed;
+                this.vy = Math.sin(this.angle) * speed;
+                this.gravity = 0;
+
+                if (type === 'buwawa') {
+                    this.emoji = genericEmojis[Math.floor(Math.random() * genericEmojis.length)];
+                    this.size = Math.random() * 30 + 20;
+                    this.vy -= 10; 
+                    this.gravity = 0.5;
+                } else if (type === 'fumble') {
+                    this.emoji = ['💦', '💧', '👻', '💀'][Math.floor(Math.random() * 4)];
+                    this.size = Math.random() * 20 + 15;
+                    this.vy = -Math.random() * 5;
+                    this.vx = (Math.random() - 0.5) * 5;
+                    this.gravity = 0.2;
+                } else if (type === 'critical') {
+                    this.emoji = ['🌈', '✨', '🌟', '💖', '🎉'][Math.floor(Math.random() * 5)];
+                    this.size = Math.random() * 30 + 15;
+                    this.vy = -Math.random() * 15 - 5;
+                    this.vx = (Math.random() - 0.5) * 15;
+                    this.gravity = 0.4;
+                } else if (type === 'trail') {
+                    this.color = tileColors[Math.floor(Math.random() * tileColors.length)];
+                    this.size = Math.random() * 10 + 5;
+                    this.decay = 0.05;
+                    this.vx *= 0.2; this.vy *= 0.2;
+                } else if (type === 'landing') {
+                    this.color = 'white';
+                    this.size = 5;
+                    this.vx *= 0.5; this.vy *= 0.2;
+                    this.decay = 0.05;
+                } else if (type === 'like') {
+                    this.emoji = '💖';
+                    this.vy = -Math.random() * 5 - 2;
+                    this.vx = (Math.random() - 0.5) * 2;
+                    this.gravity = 0;
+                    this.decay = 0.015;
+                } else if (type === 'gold') {
+                    this.emoji = '✨';
+                    this.color = colors.yellow;
+                    this.vy = -Math.random() * 5 - 2;
+                    this.vx = (Math.random() - 0.5) * 2;
+                    this.decay = 0.015;
+                } else if (type === 'confetti') {
+                    this.color = tileColors[Math.floor(Math.random() * tileColors.length)];
+                    this.size = Math.random() * 15 + 5;
+                    this.vx = (Math.random() - 0.5) * 20;
+                    this.vy = (Math.random() - 1) * 20 - 5;
+                    this.gravity = 0.3;
+                    this.decay = Math.random() * 0.005 + 0.002;
+                    this.isRibbon = Math.random() > 0.5;
+                }
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += this.gravity;
+                this.rotation += this.rotSpeed;
+                this.life -= this.decay;
+                
+                if (this.type === 'confetti' || this.type === 'buwawa') {
+                    this.vx *= 0.98;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = Math.max(0, this.life);
+                
+                // 重い影処理は無効化
+                ctx.shadowBlur = 0; 
+                ctx.shadowColor = 'transparent';
+
+                if (this.emoji) {
+                    ctx.font = `${this.size}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.emoji, 0, 0);
+                } else if (this.isRibbon) {
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(-this.size/2, -this.size/8, this.size, this.size/4);
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        function spawnParticles(x, y, type, count = 5) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, type));
+            }
+        }
+
+        const diceBtn = document.getElementById('dice-btn');
+        const diceValueEl = document.getElementById('dice-value');
+        const bigDiceResult = document.getElementById('big-dice-result');
+        const likesCountEl = document.getElementById('likes-count');
+        const goldCountEl = document.getElementById('gold-count');
+        const celebrationText = document.getElementById('celebration-text');
+
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function addLikes(amount) {
+            const oldVal = gameState.likes;
+            gameState.likes += amount;
+            animateValue(likesCountEl, oldVal, gameState.likes, 500);
+            checkMilestones();
+        }
+
+        function addGold(amount) {
+            const oldVal = gameState.gold;
+            gameState.gold += amount;
+            animateValue(goldCountEl, oldVal, gameState.gold, 500);
+            checkMilestones();
+        }
+
+        function showPopup(message, color = '#ff6bc6') {
+            celebrationText.innerText = message;
+            celebrationText.style.webkitTextStroke = `3px ${color}`;
+            celebrationText.style.filter = `drop-shadow(0 0 20px ${color})`;
+            celebrationText.style.opacity = 1;
+            celebrationText.style.transform = 'translate(-50%, -50%) scale(1.2)';
+            
+            setTimeout(() => {
+                celebrationText.style.opacity = 0;
+                celebrationText.style.transform = 'translate(-50%, -50%) scale(1)';
+            }, 3000);
+        }
+        
+        function showBigDice(value) {
+            const diceUnicode = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            bigDiceResult.innerText = diceUnicode[value - 1];
+            
+            // 色分け
+            if (value === 1) bigDiceResult.style.color = '#b97fff'; // purple
+            else if (value === 6) bigDiceResult.style.color = '#45f3ff'; // cyan
+            else bigDiceResult.style.color = 'rgba(255, 255, 255, 0.9)'; // white
+
+            bigDiceResult.classList.add('show');
+            setTimeout(() => {
+                bigDiceResult.classList.remove('show');
+            }, 1200);
+        }
+
+        function checkMilestones() {
+            let trigger = false;
+            let message = "";
+            let color = "";
+            if (gameState.likes >= gameState.milestoneLikes) {
+                gameState.milestoneLikes += 1000;
+                trigger = true;
+                message = "MEGA LIKES! 💖";
+                color = colors.pink;
+            }
+            if (gameState.gold >= gameState.milestoneGold) {
+                gameState.milestoneGold += 2000;
+                trigger = true;
+                message = "GOLD RUSH! 💰";
+                color = colors.yellow;
+            }
+
+            if (trigger) {
+                playSound('celebration');
+                spawnParticles(centerX, centerY, 'confetti', 40);
+                showPopup(message, color);
+            }
+        }
+
+        diceBtn.addEventListener('click', async (e) => {
+            if (gameState.isMoving) return;
+            initAudio(); 
+            
+            if (typeof updateChatState === 'function') updateChatState('rolling');
+            
+            diceBtn.classList.add('active-press');
+            setTimeout(() => diceBtn.classList.remove('active-press'), 150);
+
+            const rect = diceBtn.getBoundingClientRect();
+            spawnParticles(rect.left + rect.width/2, rect.top, 'buwawa', 5);
+            
+            diceValueEl.classList.add('rolling-dice');
+            diceBtn.style.transform = 'scale(1.1)';
+
+            const diceUnicode = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            
+            let roll = 1;
+            let rolls = 0;
+            let lastSoundTime = 0;
+            
+            const rollInterval = setInterval(() => {
+                diceValueEl.innerText = diceUnicode[Math.floor(Math.random()*6)];
+                rolls++;
+                
+                const now = performance.now();
+                if (now - lastSoundTime > 80) {
+                     playSound('roll');
+                     lastSoundTime = now;
+                }
+                
+                if (rolls % 4 === 0 && typeof spawnFakeChat === 'function') {
+                    spawnFakeChat();
+                }
+
+                if (rolls > 15) {
+                    clearInterval(rollInterval);
+                    diceValueEl.classList.remove('rolling-dice');
+                    diceBtn.style.transform = '';
+                    
+                    roll = Math.floor(Math.random() * 6) + 1;
+                    diceValueEl.innerText = diceUnicode[roll - 1];
+                    
+                    showBigDice(roll);
+                    
+                    if (roll === 1) {
+                        if (typeof updateChatState === 'function') updateChatState('fumble', roll);
+                        playSound('fumble');
+                        spawnParticles(centerX, centerY, 'fumble', 15);
+                        showPopup("FUMBLE... 💦", colors.purple);
+                    } else if (roll === 6) {
+                        if (typeof updateChatState === 'function') updateChatState('critical', roll);
+                        playSound('critical');
+                        spawnParticles(centerX, centerY, 'confetti', 30);
+                        showPopup("CRITICAL!! 🌈", colors.cyan);
+                    } else {
+                        if (typeof updateChatState === 'function') updateChatState('normal', roll);
+                    }
+
+                    setTimeout(async () => {
+                        await character.move(roll);
+                        if (typeof updateChatState === 'function') updateChatState('idle');
+                    }, 600);
+                }
+            }, 60); 
+        });
+
+        canvas.addEventListener('pointerdown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            const dx = mouseX - character.screenX;
+            const dy = mouseY - character.screenY;
+            if (Math.sqrt(dx*dx + dy*dy) < character.size * 1.5) {
+                character.currentEmojiIndex = (character.currentEmojiIndex + 1) % character.emojis.length;
+                character.tapScale = 1.5;
+                playSound('tap');
+                spawnParticles(character.screenX, character.screenY, 'like', 5);
+
+                if (typeof spawnFakeChat === 'function') {
+                    const phrases = phraseBank.change || ["お着替え！", "かわいい！"];
+                    spawnFakeChat(phrases[Math.floor(Math.random() * phrases.length)]);
+                }
+            }
+        });
+
+        // --- Fake Chat System ---
+        let phraseBank = {
+            idle: ["今日も平和だね〜", "カフェラテ飲みたい", "BGMかわいい", "まったり〜", "癒やされる", "おなかすいた"],
+            rolling: ["いけー！", "何が出るかな？", "ドキドキ...", "お願い！"],
+            result_fumble: ["一旦休憩ってことね☕", "あわてないあわてない", "ドンマイすぎるw"],
+            result_critical: ["神！✨", "6ｷﾀ━(ﾟ∀ﾟ)━!", "最強！！", "大爆走かわいい！"],
+            result_normal: ["いいね！", "よしよし", "順調！", "とことこ歩くの可愛い"],
+            change: ["お着替えタイム！", "雰囲気変わった！", "可愛さ限界突破"],
+            lap: ["1周クリアたすかる！", "完走おめでとう！", "世界を一周した気分"]
+        };
+
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeSettingsBtn = document.getElementById('close-settings');
+        const talkFileInput = document.getElementById('talk-file-input');
+        const customEmojiInput = document.getElementById('custom-emoji-input');
+        const resetGameBtn = document.getElementById('reset-game-btn');
+        const talkStatus = document.getElementById('talk-status');
+
+        settingsBtn.addEventListener('click', () => settingsModal.classList.remove('hidden'));
+        closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+        customEmojiInput.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if(val.length > 0) {
+                character.emojis = parseEmojis(val);
+                character.currentEmojiIndex = 0;
+            }
+        });
+
+        resetGameBtn.addEventListener('click', () => {
+            gameState.laps = 1;
+            gameState.likes = 0;
+            gameState.gold = 0;
+            gameState.boardPos = 0;
+            character.drawIndex = 0;
+            character.currentEmojiIndex = Math.floor(Math.random() * character.emojis.length);
+            
+            document.getElementById('lap-count').innerText = gameState.laps;
+            document.getElementById('likes-count').innerText = gameState.likes;
+            document.getElementById('gold-count').innerText = gameState.gold;
+            
+            settingsModal.classList.add('hidden');
+            playSound('jump');
+            spawnParticles(centerX, centerY, 'confetti', 30);
+        });
+
+        talkFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target.result;
+                const loaded = parseTalkTxt(text);
+                if (loaded) {
+                    talkStatus.innerText = `Loaded custom messages from ${file.name}!`;
+                    talkStatus.classList.replace('text-gray-600', 'text-pink-600');
+                } else {
+                    talkStatus.innerText = "Failed to parse categories. Using defaults.";
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        function parseTalkTxt(text) {
+            const lines = text.split(/\r?\n/);
+            let currentCategory = null;
+            const newBank = { idle: [], rolling: [], result_fumble: [], result_critical: [], result_normal: [], change: [], lap: [] };
+            const validCategories = Object.keys(newBank);
+
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+                if (line.startsWith('# ')) {
+                    const cat = line.substring(2).trim();
+                    currentCategory = validCategories.includes(cat) ? cat : null;
+                } else if (currentCategory) {
+                    newBank[currentCategory].push(line);
+                }
+            }
+            
+            let loaded = false;
+            for (let key of validCategories) {
+                if (newBank[key].length > 0) {
+                    phraseBank[key] = newBank[key];
+                    loaded = true;
+                }
+            }
+            return loaded;
+        }
+        
+        let chatState = 'idle';
+        let currentRollValue = 0;
+        
+        function updateChatState(state, roll = 0) {
+            chatState = state;
+            if (roll > 0) currentRollValue = roll;
+            if (state !== 'idle') spawnFakeChat();
+        }
+
+        const chatColors = ['text-pink-600', 'text-purple-600', 'text-cyan-600', 'text-orange-500'];
+        const chatContainer = document.getElementById('chat-container');
+        let activeBubbles = [];
+
+        function spawnFakeChat(forceText = null) {
+            const msg = document.createElement('div');
+            const colorClass = chatColors[Math.floor(Math.random() * chatColors.length)];
+            
+            msg.className = `absolute right-0 pastel-panel px-4 py-2 text-sm md:text-base font-black ${colorClass} max-w-full break-words shadow-sm`;
+            msg.style.borderRadius = "20px 20px 0 20px";
+            msg.style.opacity = '0';
+            
+            let text = forceText;
+            if (!text) {
+                if (chatState === 'idle') {
+                    text = phraseBank.idle[Math.floor(Math.random() * phraseBank.idle.length)];
+                } else if (chatState === 'rolling') {
+                    text = phraseBank.rolling[Math.floor(Math.random() * phraseBank.rolling.length)];
+                } else if (chatState === 'fumble') {
+                    text = phraseBank.result_fumble[Math.floor(Math.random() * phraseBank.result_fumble.length)];
+                } else if (chatState === 'critical') {
+                    text = phraseBank.result_critical[Math.floor(Math.random() * phraseBank.result_critical.length)];
+                } else {
+                    const normalTexts = [...phraseBank.result_normal, `${currentRollValue}だ！`, `${currentRollValue}進む！`];
+                    text = normalTexts[Math.floor(Math.random() * normalTexts.length)];
+                }
+            }
+            
+            msg.innerText = text;
+            chatContainer.appendChild(msg);
+            
+            const height = msg.offsetHeight;
+            const margin = 12;
+            let targetY = -10; 
+            
+            if (activeBubbles.length > 0) {
+                const lowest = activeBubbles[activeBubbles.length - 1];
+                const requiredY = lowest.y - height - margin;
+                targetY = Math.min(-10, requiredY);
+            }
+            
+            const driftX = Math.random() * 20 - 10;
+            
+            const bubbleObj = {
+                element: msg,
+                y: targetY,
+                height: height,
+                driftSpeed: 1.5,
+                xOffset: driftX,
+                phase: Math.random() * Math.PI * 2
+            };
+            
+            msg.style.transform = `translateX(${bubbleObj.xOffset}px)`;
+            msg.style.bottom = `${bubbleObj.y}px`;
+            msg.style.opacity = '1';
+            
+            activeBubbles.push(bubbleObj);
+        }
+
+        function chatLoop() {
+            let probability = chatState === 'idle' ? 0.4 : 0.85;
+            
+            if (Math.random() < probability) {
+                spawnFakeChat();
+                if (Math.random() < 0.3) setTimeout(() => spawnFakeChat(), 200);
+                if (Math.random() < 0.1) setTimeout(() => spawnFakeChat(), 400);
+            }
+            
+            const delay = chatState === 'idle' ? 1200 : 300;
+            setTimeout(chatLoop, delay + Math.random() * 500);
+        }
+        chatLoop();
+
+        function updateChats() {
+            const containerHeight = chatContainer.offsetHeight || 500;
+            
+            for (let i = activeBubbles.length - 1; i >= 0; i--) {
+                const b = activeBubbles[i];
+                b.y += b.driftSpeed;
+                b.element.style.bottom = b.y + 'px';
+                
+                const currentX = b.xOffset + Math.sin((Date.now() / 1000) * 1.5 + b.phase) * 8;
+                b.element.style.transform = `translateX(${currentX}px)`;
+                
+                if (b.y > containerHeight - 60) {
+                    b.element.style.opacity = Math.max(0, 1 - (b.y - (containerHeight - 60)) / 50);
+                }
+                
+                if (b.y > containerHeight) {
+                    if (b.element.parentElement) {
+                        b.element.parentElement.removeChild(b.element);
+                    }
+                    activeBubbles.splice(i, 1);
+                }
+            }
+        }
+
+        // --- Main rendering loop ---
+        function render() {
+            drawBoard();
+
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.update();
+                p.draw();
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            updateChats();
+            requestAnimationFrame(render);
+        }
+
+        // Initialize
+        resize();
+        render();
+
+    </script>
+</body>
+</html>
