@@ -1110,6 +1110,62 @@
         resize();
         render();
 
-    </script>
+        // --- BroadcastChannel Controller Listener (Added) ---
+        const controlChannel = new BroadcastChannel('streamer-board-game');
+        controlChannel.addEventListener('message', async (event) => {
+            const data = event.data;
+            if (!data) return;
+
+            if (data.type === 'ROLL') {
+                // トリガー: ダイスボタンのクリックイベントをシミュレート
+                if (!gameState.isMoving) {
+                    diceBtn.click();
+                }
+            } else if (data.type === 'RESET') {
+                // トリガー: リセットボタンのクリックイベントをシミュレート
+                resetGameBtn.click();
+            } else if (data.type === 'JUMP') {
+                // トリガー: 指定マスへの直接移動
+                const targetTile = parseInt(data.targetPos, 10);
+                if (!isNaN(targetTile) && !gameState.isMoving) {
+                    initAudio();
+                    gameState.isMoving = true;
+                    
+                    const currentPos = gameState.boardPos;
+                    // targetTile に到達するために必要なステップ数を計算
+                    let steps = targetTile - currentPos;
+                    if (steps <= 0) steps += numTiles; // 既に過ぎている場合は1周先へなど
+
+                    // 1歩ずつ進める既存のロジックを利用、あるいは直接位置を合わせる
+                    for (let i = currentPos + 1; i <= currentPos + steps; i++) {
+                        await character.hopToNextTile(i);
+                        spawnParticles(tiles[i % numTiles].x, tiles[i % numTiles].y, 'landing', 3);
+                        
+                        const tileColor = tiles[i % numTiles].color;
+                        if (tileColor === colors.pink || tileColor === colors.peach) {
+                            addLikes(Math.floor(Math.random() * 20) + 10);
+                            spawnParticles(tiles[i % numTiles].x, tiles[i % numTiles].y - 50, 'like', 3);
+                            playSound('like');
+                        } else {
+                            addGold(Math.floor(Math.random() * 50) + 50);
+                            spawnParticles(tiles[i % numTiles].x, tiles[i % numTiles].y - 50, 'gold', 3);
+                            playSound('gold');
+                        }
+
+                        if (i % numTiles === 0 && i !== 0) {
+                            gameState.laps++;
+                            document.getElementById('lap-count').innerText = gameState.laps;
+                            spawnParticles(centerX, centerY, 'lap_complete', 15);
+                            playSound('celebration');
+                        }
+                    }
+
+                    gameState.boardPos = (currentPos + steps) % numTiles;
+                    character.drawIndex = gameState.boardPos;
+                    gameState.isMoving = false;
+                    if (typeof updateChatState === 'function') updateChatState('idle');
+                }
+            }
+        });
 </body>
 </html>

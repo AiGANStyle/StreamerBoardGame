@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamerBoardGame - Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #fce7f3, #e0e7ff);
+            min-height: 100vh;
+        }
+        .control-btn {
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .control-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-6">
+    <div class="max-w-md w-full bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-8 border-4 border-pink-200">
+        <h1 class="text-3xl font-black text-center text-pink-600 mb-6 drop-shadow-sm">
+            🎮 配信コントロール
+        </h1>
+
+        <!-- ステータス表示 -->
+        <div id="status-badge" class="mb-6 text-center text-sm font-bold py-2 px-4 rounded-full bg-yellow-100 text-yellow-700 border-2 border-yellow-300">
+            接続待機中... (BroadcastChannel: streamer-board-game)
+        </div>
+
+        <div class="space-y-6">
+            <!-- ROLL ボタン -->
+            <div>
+                <button id="ctrl-roll-btn" class="control-btn w-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white font-black text-2xl py-4 px-6 rounded-2xl shadow-lg border-4 border-white">
+                    🎲 ダイスを振る (ROLL!)
+                </button>
+            </div>
+
+            <!-- RESET ボタン -->
+            <div>
+                <button id="ctrl-reset-btn" class="control-btn w-full bg-gradient-to-r from-red-400 to-pink-500 hover:from-red-500 hover:to-pink-600 text-white font-black text-xl py-3 px-6 rounded-2xl shadow-md border-4 border-white">
+                    🔄 ゲームをリセット (RESET)
+                </button>
+            </div>
+
+            <!-- マス目ジャンプ -->
+            <div class="bg-pink-50 p-4 rounded-2xl border-2 border-pink-200">
+                <label for="ctrl-tile-input" class="block text-sm font-black text-gray-700 mb-2">
+                    🎯 任意のマスへジャンプ (ターゲット位置)
+                </label>
+                <div class="flex gap-2">
+                    <input type="number" id="ctrl-tile-input" min="0" placeholder="マス番号 (例: 5)" class="flex-1 bg-white border-2 border-pink-300 rounded-xl px-4 py-2 font-bold text-gray-700 focus:outline-none focus:border-pink-500">
+                    <button id="ctrl-jump-btn" class="control-btn bg-cyan-400 hover:bg-cyan-500 text-white font-black px-6 py-2 rounded-xl shadow-md border-2 border-white">
+                        移動
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // BroadcastChannel による簡易P2P/同一オリジン間通信
+        const bc = new BroadcastChannel('streamer-board-game');
+        const statusBadge = document.getElementById('status-badge');
+
+        statusBadge.innerText = '接続完了！操作可能です 🚀';
+        statusBadge.className = 'mb-6 text-center text-sm font-bold py-2 px-4 rounded-full bg-green-100 text-green-700 border-2 border-green-300';
+
+        // ROLL ボタン
+        document.getElementById('ctrl-roll-btn').addEventListener('click', () => {
+            bc.postMessage({ type: 'ROLL' });
+        });
+
+        // RESET ボタン
+        document.getElementById('ctrl-reset-btn').addEventListener('click', () => {
+            bc.postMessage({ type: 'RESET' });
+        });
+
+        // ジャンプ ボタン
+        document.getElementById('ctrl-jump-btn').addEventListener('click', () => {
+            const input = document.getElementById('ctrl-tile-input');
+            const targetPos = parseInt(input.value, 10);
+            if (!isNaN(targetPos) && targetPos >= 0) {
+                bc.postMessage({ type: 'JUMP', targetPos: targetPos });
+            } else {
+                alert('有効なマス番号を入力してください');
+            }
+        });
+
+        // Enterキーでもジャンプできるようにする
+        document.getElementById('ctrl-tile-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('ctrl-jump-btn').click();
+            }
+        });
+    </script>
+</body>
+</html>
